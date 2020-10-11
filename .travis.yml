@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t timoshuka/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true timoshuka/react-test npm test
+
+after_success:
+  - docker build -t timoshuka/multi-client ./client
+  - docker build -t timoshuka/multi-nginx ./nginx
+  - docker build -t timoshuka/multi-server ./server
+  - docker build -t timoshuka/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push timoshuka/multi-client
+  - docker push timoshuka/multi-nginx
+  - docker push timoshuka/multi-server
+  - docker push timoshuka/multi-worker
